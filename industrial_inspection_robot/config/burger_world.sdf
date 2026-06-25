@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<sdf version="1.8">
+  <world name="burger_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <plugin name="gz::sim::systems::Physics" filename="gz-sim-physics-system"/>
+    <plugin name="gz::sim::systems::UserCommands" filename="gz-sim-user-commands-system"/>
+    <plugin name="gz::sim::systems::SceneBroadcaster" filename="gz-sim-scene-broadcaster-system"/>
+
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <constant>0.9</constant>
+        <linear>0.01</linear>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="enclosure_walls">
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+      <link name="box_walls">
+        <collision name="n_col"><pose>5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></collision>
+        <visual name="n_vis"><pose>5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></visual>
+        <collision name="s_col"><pose>-5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></collision>
+        <visual name="s_vis"><pose>-5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></visual>
+        <collision name="e_col"><pose>0 5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></collision>
+        <visual name="e_vis"><pose>0 5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></visual>
+        <collision name="w_col"><pose>0 -5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></collision>
+        <visual name="w_vis"><pose>0 -5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <model name="industrial_box_1">
+      <static>true</static>
+      <pose>2.0 1.5 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>1.0 1.0 1.0</size></box></geometry>
+          <material><ambient>0.1 0.5 0.1 1</ambient><diffuse>0.1 0.7 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="industrial_box_2">
+      <static>true</static>
+      <pose>1.5 -2.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.8 0.8 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>0.8 0.8 1.0</size></box></geometry>
+          <material><ambient>0.1 0.5 0.1 1</ambient><diffuse>0.1 0.7 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="industrial_box_3">
+      <static>true</static>
+      <pose>-2.5 2.0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.2 0.6 1.0</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>1.2 0.6 1.0</size></box></geometry>
+          <material><ambient>0.1 0.5 0.1 1</ambient><diffuse>0.1 0.7 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+  </world>
+</sdf>

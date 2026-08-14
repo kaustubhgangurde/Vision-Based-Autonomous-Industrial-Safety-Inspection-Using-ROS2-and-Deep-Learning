@@ -21,14 +21,18 @@ class InspectionManagerNode(Node):
         self.robot_y = 0.0
         self.robot_yaw = 0.0
         self.front_min_dist = 10.0
+        self.left_min_dist = 10.0
+        self.right_min_dist = 10.0
         
-        # Inspection Route Waypoints (Industrial Floor Map Coordinates)
+        # Optimized Industrial Floor Inspection Waypoints
+        # Phase 1: SLAM Mapping & Corridor Patrol
+        # Phase 2: Hazard Survey & Final Safety Report
         self.waypoints = [
-            {"name": "Inspection Checkpoint A (East Corridor)", "x": 1.5, "y": 0.0},
-            {"name": "Inspection Checkpoint B (North Storage)", "x": 1.0, "y": 1.2},
-            {"name": "Inspection Checkpoint C (West Chemical Area)", "x": -1.2, "y": 1.2},
-            {"name": "Inspection Checkpoint D (South Equipment Bay)", "x": -1.2, "y": -1.2},
-            {"name": "Inspection Checkpoint E (Central Hub - Return)", "x": 0.0, "y": 0.0}
+            {"name": "Checkpoint A: East Corridor (SLAM Mapping)", "x": 1.8, "y": 0.0},
+            {"name": "Checkpoint B: North Storage (Perimeter Sweep)", "x": 1.8, "y": 2.2},
+            {"name": "Checkpoint C: West Chemical Bay (Hazard Survey)", "x": -1.8, "y": 2.2},
+            {"name": "Checkpoint D: South Equipment Bay (Hazard Survey)", "x": -1.8, "y": -1.8},
+            {"name": "Checkpoint E: Central Hub (Final Inspection & Report)", "x": 0.0, "y": 0.0}
         ]
         
         self.current_wp_idx = 0
@@ -36,7 +40,7 @@ class InspectionManagerNode(Node):
         self.pause_start_time = None
         
         self.timer = self.create_timer(0.1, self.control_loop)
-        self.get_logger().info('Autonomous Inspection Route Manager active with LiDAR Obstacle Avoidance...')
+        self.get_logger().info('Autonomous Inspection Route Manager active. High-Sensitivity Obstacle Avoidance enabled.')
 
     def odom_callback(self, msg):
         self.robot_x = msg.pose.pose.position.x
@@ -48,16 +52,21 @@ class InspectionManagerNode(Node):
 
     def scan_callback(self, msg):
         if len(msg.ranges) > 0:
-            # Check front 60-degree arc (-30 to +30 deg)
             total_samples = len(msg.ranges)
             center = total_samples // 2
             arc_samples = max(1, total_samples // 6)
+            
             front_arc = msg.ranges[center - arc_samples : center + arc_samples]
-            valid_ranges = [r for r in front_arc if not math.isnan(r) and not math.isinf(r) and r > 0.05]
-            if valid_ranges:
-                self.front_min_dist = min(valid_ranges)
-            else:
-                self.front_min_dist = 10.0
+            valid_front = [r for r in front_arc if not math.isnan(r) and not math.isinf(r) and r > 0.05]
+            self.front_min_dist = min(valid_front) if valid_front else 10.0
+
+            left_arc = msg.ranges[center + arc_samples : center + 2*arc_samples]
+            valid_left = [r for r in left_arc if not math.isnan(r) and not math.isinf(r) and r > 0.05]
+            self.left_min_dist = min(valid_left) if valid_left else 10.0
+
+            right_arc = msg.ranges[center - 2*arc_samples : center - arc_samples]
+            valid_right = [r for r in right_arc if not math.isnan(r) and not math.isinf(r) and r > 0.05]
+            self.right_min_dist = min(valid_right) if valid_right else 10.0
 
     def control_loop(self):
         if self.current_wp_idx >= len(self.waypoints):
@@ -79,34 +88,41 @@ class InspectionManagerNode(Node):
         twist = Twist()
 
         if self.state == 'NAVIGATING':
-            if dist < 0.35:
-                # Reached Waypoint: Perform 360 Scan
+            if dist < 0.45:
+                # Reached Waypoint: Brief pause for camera sampling (No 360-degree spins)
                 self.state = 'SCANNING'
                 self.pause_start_time = time.time()
-                self.get_logger().info(f"Arrived at {target_wp['name']}. Initiating 360-degree inspection scan...")
-            elif self.front_min_dist < 0.40:
-                # Obstacle detected in close proximity: Steer away safely around obstacle
-                self.get_logger().warn(f"Obstacle in path ({self.front_min_dist:.2f}m). Steering around obstacle...")
-                twist.linear.x = 0.08
-                twist.angular.z = 0.7
+                self.get_logger().info(f"Arrived at {target_wp['name']}. Performing visual inspection sweep...")
+            elif self.front_min_dist < 0.70:
+                # High sensitivity obstacle avoidance threshold (0.70m)
+                self.get_logger().warn(f"Obstacle detected ahead ({self.front_min_dist:.2f}m). Steering around obstacle...")
+                if self.front_min_dist < 0.35:
+                    # Too close (< 0.35m): Backup and steer away!
+                    twist.linear.x = -0.12
+                    twist.angular.z = 0.8 if self.left_min_dist > self.right_min_dist else -0.8
+                else:
+                    # Turn away smoothly without pushing forward into object
+                    twist.linear.x = 0.02
+                    turn_dir = 0.9 if self.left_min_dist > self.right_min_dist else -0.9
+                    twist.angular.z = turn_dir
                 self.cmd_pub.publish(twist)
             else:
-                if abs(yaw_err) > 0.25:
+                # Clear path: Navigate to target waypoint
+                if abs(yaw_err) > 0.30:
                     twist.angular.z = 0.6 if yaw_err > 0 else -0.6
                 else:
-                    twist.linear.x = min(0.35, max(0.15, 0.5 * dist))
+                    twist.linear.x = min(0.30, max(0.12, 0.4 * dist))
                     twist.angular.z = 0.4 * yaw_err
                 self.cmd_pub.publish(twist)
 
         elif self.state == 'SCANNING':
             elapsed = time.time() - self.pause_start_time
-            if elapsed < 6.28: # Perform 360 rotation scan
-                twist.angular.z = 1.0
-                self.cmd_pub.publish(twist)
-            else:
+            if elapsed < 2.0:  # Brief 2-second pause
+                twist.linear.x = 0.0
                 twist.angular.z = 0.0
                 self.cmd_pub.publish(twist)
-                self.get_logger().info(f"Completed inspection scan at {target_wp['name']}.")
+            else:
+                self.get_logger().info(f"Completed visual inspection at {target_wp['name']}.")
                 self.current_wp_idx += 1
                 self.state = 'NAVIGATING'
 

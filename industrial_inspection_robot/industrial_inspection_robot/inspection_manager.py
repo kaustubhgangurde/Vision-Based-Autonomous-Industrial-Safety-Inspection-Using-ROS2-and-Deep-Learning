@@ -39,6 +39,8 @@ class InspectionManagerNode(Node):
         self.state = 'NAVIGATING'
         self.pause_start_time = None
         
+        self.avoidance_dir = 0.0  # Latched avoidance direction (1.0 for Left, -1.0 for Right)
+        
         self.timer = self.create_timer(0.1, self.control_loop)
         self.get_logger().info('Autonomous Inspection Route Manager active. High-Sensitivity Obstacle Avoidance enabled.')
 
@@ -91,23 +93,29 @@ class InspectionManagerNode(Node):
             if dist < 0.45:
                 # Reached Waypoint: Brief pause for camera sampling (No 360-degree spins)
                 self.state = 'SCANNING'
+                self.avoidance_dir = 0.0
                 self.pause_start_time = time.time()
                 self.get_logger().info(f"Arrived at {target_wp['name']}. Performing visual inspection sweep...")
-            elif self.front_min_dist < 0.70:
-                # High sensitivity obstacle avoidance threshold (0.70m)
-                self.get_logger().warn(f"Obstacle detected ahead ({self.front_min_dist:.2f}m). Steering around obstacle...")
+            elif self.front_min_dist < 0.65:
+                # Obstacle Avoidance Mode (Latched turn direction)
+                if self.avoidance_dir == 0.0:
+                    self.avoidance_dir = 1.0 if self.left_min_dist >= self.right_min_dist else -1.0
+                
+                self.get_logger().warn(f"Obstacle ahead ({self.front_min_dist:.2f}m). Steering {'LEFT' if self.avoidance_dir > 0 else 'RIGHT'}...")
+                
                 if self.front_min_dist < 0.35:
-                    # Too close (< 0.35m): Backup and steer away!
-                    twist.linear.x = -0.12
-                    twist.angular.z = 0.8 if self.left_min_dist > self.right_min_dist else -0.8
+                    # Too close (< 0.35m): Backup and turn
+                    twist.linear.x = -0.10
+                    twist.angular.z = 0.8 * self.avoidance_dir
                 else:
-                    # Turn away smoothly without pushing forward into object
-                    twist.linear.x = 0.02
-                    turn_dir = 0.9 if self.left_min_dist > self.right_min_dist else -0.9
-                    twist.angular.z = turn_dir
+                    # Smooth avoidance curve
+                    twist.linear.x = 0.10
+                    twist.angular.z = 0.7 * self.avoidance_dir
+                
                 self.cmd_pub.publish(twist)
             else:
-                # Clear path: Navigate to target waypoint
+                # Clear Path: Reset avoidance latch & navigate to waypoint
+                self.avoidance_dir = 0.0
                 if abs(yaw_err) > 0.30:
                     twist.angular.z = 0.6 if yaw_err > 0 else -0.6
                 else:

@@ -127,8 +127,12 @@ class HazardDetectorNode(Node):
                     cv2.putText(cv_img, label, (x, max(20, y - 8)),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, profile["color"], 2)
                     
-                    # Calculate estimated Map coordinates
-                    dist = self.front_distance
+                    # Calculate estimated Map coordinates with bounded focal depth
+                    if self.front_distance < 4.0:
+                        dist = max(0.5, min(2.5, self.front_distance))
+                    else:
+                        dist = 1.5  # Bounded optical projection depth
+                    
                     hx = round(self.robot_x + dist * math.cos(self.robot_yaw), 2)
                     hy = round(self.robot_y + dist * math.sin(self.robot_yaw), 2)
                     

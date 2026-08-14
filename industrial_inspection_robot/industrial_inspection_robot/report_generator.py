@@ -29,20 +29,30 @@ class ReportGeneratorNode(Node):
         try:
             detected_list = json.loads(msg.data)
             for hazard in detected_list:
-                # Check for spatial deduplication (within 0.8m)
+                # Robust Spatial Clustering & Deduplication
                 is_duplicate = False
                 for existing in self.hazards_db:
-                    if existing["type"] == hazard["type"]:
-                        dist = math.hypot(existing["map_x"] - hazard["map_x"], existing["map_y"] - hazard["map_y"])
-                        if dist < 0.8:
-                            is_duplicate = True
-                            # Update confidence if higher
-                            existing["confidence"] = max(existing["confidence"], hazard["confidence"])
-                            break
+                    dist = math.hypot(existing["map_x"] - hazard["map_x"], existing["map_y"] - hazard["map_y"])
+                    
+                    # 1. Same hazard classification within 2.2 meters -> Merge as duplicate
+                    if existing["type"] == hazard["type"] and dist < 2.2:
+                        is_duplicate = True
+                        existing["confidence"] = max(existing["confidence"], hazard["confidence"])
+                        break
+                    
+                    # 2. Overlapping physical object within 1.5 meters -> Pick highest confidence classification
+                    if dist < 1.5:
+                        is_duplicate = True
+                        if hazard["confidence"] > existing["confidence"]:
+                            existing["type"] = hazard["type"]
+                            existing["severity"] = hazard["severity"]
+                            existing["confidence"] = hazard["confidence"]
+                        break
+
                 if not is_duplicate:
                     hazard["id"] = f"HAZ-{len(self.hazards_db)+1:03d}"
                     self.hazards_db.append(hazard)
-                    self.get_logger().info(f"New Hazard Recorded: {hazard['id']} - {hazard['type']} at ({hazard['map_x']}m, {hazard['map_y']}m)")
+                    self.get_logger().info(f"New Unique Hazard Recorded: {hazard['id']} - {hazard['type']} at ({hazard['map_x']}m, {hazard['map_y']}m)")
                     self.generate_reports()
         except Exception as e:
             self.get_logger().error(f"Error parsing hazard data: {e}")

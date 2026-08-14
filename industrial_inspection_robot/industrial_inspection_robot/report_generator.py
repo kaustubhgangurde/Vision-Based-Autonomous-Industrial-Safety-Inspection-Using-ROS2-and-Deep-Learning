@@ -11,11 +11,9 @@ class ReportGeneratorNode(Node):
     def __init__(self):
         super().__init__('report_generator_node')
         
-        self.output_dir = '/home/kaustubh/inspection_robot_ws/reports'
-        os.makedirs(self.output_dir, exist_ok=True)
-        
         self.hazards_db = []
         self.start_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        self.mission_complete_logged = False
         
         self.create_subscription(String, '/inspection/detected_hazards', self.hazard_callback, 10)
         self.create_subscription(String, '/inspection/status', self.status_callback, 10)
@@ -47,15 +45,21 @@ class ReportGeneratorNode(Node):
 
     def status_callback(self, msg):
         if "MISSION_COMPLETE" in msg.data:
-            self.get_logger().info("Mission completion received. Compiling final safety inspection report...")
-            self.generate_reports()
+            if not self.mission_complete_logged:
+                self.mission_complete_logged = True
+                self.get_logger().info("Mission completion received. Compiling final safety inspection report...")
+                self.generate_reports()
 
     def generate_reports(self):
         if not self.hazards_db:
             return
 
-        html_file = os.path.join(self.output_dir, 'safety_inspection_report.html')
-        md_file = os.path.join(self.output_dir, 'safety_inspection_report.md')
+        directories = [
+            os.path.expanduser('~/inspection_reports'),
+            os.path.expanduser('~/inspection_robot_ws/reports')
+        ]
+        for d in directories:
+            os.makedirs(d, exist_ok=True)
 
         critical_cnt = sum(1 for h in self.hazards_db if h["severity"] == "CRITICAL")
         high_cnt = sum(1 for h in self.hazards_db if h["severity"] == "HIGH")
@@ -146,9 +150,6 @@ class ReportGeneratorNode(Node):
 </body>
 </html>
 """
-        with open(html_file, 'w') as f:
-            f.write(html_content)
-
         # 2. Markdown Report Generation
         md_content = f"# Autonomous Industrial Safety Inspection Report\n\n"
         md_content += f"- **Facility**: Industrial Assembly Plant #4\n"
@@ -159,8 +160,16 @@ class ReportGeneratorNode(Node):
         for h in self.hazards_db:
             md_content += f"| `{h['id']}` | {h['type']} | **{h['severity']}** | ({h['map_x']}m, {h['map_y']}m) | {int(h['confidence']*100)}% | {h['timestamp']} |\n"
 
-        with open(md_file, 'w') as f:
-            f.write(md_content)
+        # 3. Write Reports to All System Locations
+        for target_dir in directories:
+            for html_filename in ['latest_report.html', 'inspection_report.html', 'safety_inspection_report.html']:
+                with open(os.path.join(target_dir, html_filename), 'w') as f:
+                    f.write(html_content)
+            for md_filename in ['latest_report.md', 'safety_inspection_report.md']:
+                with open(os.path.join(target_dir, md_filename), 'w') as f:
+                    f.write(md_content)
+            with open(os.path.join(target_dir, 'inspection_summary.json'), 'w') as f:
+                json.dump({"hazards": self.hazards_db, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}, f, indent=4)
 
 def main(args=None):
     rclpy.init(args=args)

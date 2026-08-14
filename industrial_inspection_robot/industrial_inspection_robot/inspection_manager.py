@@ -24,25 +24,22 @@ class InspectionManagerNode(Node):
         self.left_min_dist = 10.0
         self.right_min_dist = 10.0
         
-        # Optimized Industrial Floor Inspection Waypoints
-        # Phase 1: SLAM Mapping & Corridor Patrol
-        # Phase 2: Hazard Survey & Final Safety Report
+        # Optimized Industrial Inspection Waypoints (Wide Corridor Aisle Navigation)
         self.waypoints = [
-            {"name": "Checkpoint A: East Corridor (SLAM Mapping)", "x": 1.8, "y": 0.0},
-            {"name": "Checkpoint B: North Storage (Perimeter Sweep)", "x": 1.8, "y": 2.2},
-            {"name": "Checkpoint C: West Chemical Bay (Hazard Survey)", "x": -1.8, "y": 2.2},
-            {"name": "Checkpoint D: South Equipment Bay (Hazard Survey)", "x": -1.8, "y": -1.8},
+            {"name": "Checkpoint A: East Assembly Corridor", "x": 2.2, "y": 0.0},
+            {"name": "Checkpoint B: North Storage Bay", "x": 1.5, "y": 3.2},
+            {"name": "Checkpoint C: West Chemical Area", "x": -2.0, "y": 3.2},
+            {"name": "Checkpoint D: South Equipment Bay", "x": -2.0, "y": -2.0},
             {"name": "Checkpoint E: Central Hub (Final Inspection & Report)", "x": 0.0, "y": 0.0}
         ]
         
         self.current_wp_idx = 0
         self.state = 'NAVIGATING'
         self.pause_start_time = None
-        
-        self.avoidance_dir = 0.0  # Latched avoidance direction (1.0 for Left, -1.0 for Right)
+        self.avoidance_dir = 0.0  # Latched direction (+1.0 for Left, -1.0 for Right)
         
         self.timer = self.create_timer(0.1, self.control_loop)
-        self.get_logger().info('Autonomous Inspection Route Manager active. High-Sensitivity Obstacle Avoidance enabled.')
+        self.get_logger().info('Autonomous Inspection Route Manager active. Vector Steering & High-Clearance Avoidance initialized.')
 
     def odom_callback(self, msg):
         self.robot_x = msg.pose.pose.position.x
@@ -91,36 +88,37 @@ class InspectionManagerNode(Node):
 
         if self.state == 'NAVIGATING':
             if dist < 0.45:
-                # Reached Waypoint: Brief pause for camera sampling (No 360-degree spins)
+                # Reached Waypoint: Perform brief 2-second visual camera inspection
                 self.state = 'SCANNING'
                 self.avoidance_dir = 0.0
                 self.pause_start_time = time.time()
                 self.get_logger().info(f"Arrived at {target_wp['name']}. Performing visual inspection sweep...")
             elif self.front_min_dist < 0.65:
-                # Obstacle Avoidance Mode (Latched turn direction)
+                # High-Clearance Avoidance (Latched Hysteresis)
                 if self.avoidance_dir == 0.0:
                     self.avoidance_dir = 1.0 if self.left_min_dist >= self.right_min_dist else -1.0
                 
                 self.get_logger().warn(f"Obstacle ahead ({self.front_min_dist:.2f}m). Steering {'LEFT' if self.avoidance_dir > 0 else 'RIGHT'}...")
                 
-                if self.front_min_dist < 0.35:
-                    # Too close (< 0.35m): Backup and turn
+                if self.front_min_dist < 0.38:
+                    # Close Proximity (< 0.38m): Active reverse backup & disengage turn
                     twist.linear.x = -0.10
-                    twist.angular.z = 0.8 * self.avoidance_dir
+                    twist.angular.z = 0.85 * self.avoidance_dir
                 else:
                     # Smooth avoidance curve
-                    twist.linear.x = 0.10
-                    twist.angular.z = 0.7 * self.avoidance_dir
+                    twist.linear.x = 0.12
+                    twist.angular.z = 0.85 * self.avoidance_dir
                 
                 self.cmd_pub.publish(twist)
             else:
-                # Clear Path: Reset avoidance latch & navigate to waypoint
+                # Clear Path: Reset avoidance latch & navigate toward waypoint
                 self.avoidance_dir = 0.0
-                if abs(yaw_err) > 0.30:
+                if abs(yaw_err) > 0.35:
+                    twist.linear.x = 0.05
                     twist.angular.z = 0.6 if yaw_err > 0 else -0.6
                 else:
-                    twist.linear.x = min(0.30, max(0.12, 0.4 * dist))
-                    twist.angular.z = 0.4 * yaw_err
+                    twist.linear.x = min(0.35, max(0.15, 0.5 * dist))
+                    twist.angular.z = 0.5 * yaw_err
                 self.cmd_pub.publish(twist)
 
         elif self.state == 'SCANNING':
@@ -145,12 +143,18 @@ def main(args=None):
     node = InspectionManagerNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException, Exception):
         pass
     finally:
-        node.destroy_node()
+        try:
+            node.destroy_node()
+        except Exception:
+            pass
         if rclpy.ok():
-            rclpy.shutdown()
+            try:
+                rclpy.shutdown()
+            except Exception:
+                pass
 
 if __name__ == '__main__':
     main()

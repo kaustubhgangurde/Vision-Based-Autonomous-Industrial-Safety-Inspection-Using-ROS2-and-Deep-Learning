@@ -54,61 +54,66 @@
       </link>
     </model>
 
+    <!-- Industrial Facility Outer Enclosure Walls (12m x 12m Plant Boundary) -->
     <model name="enclosure_walls">
       <static>true</static>
       <pose>0 0 0 0 0 0</pose>
       <link name="box_walls">
-        <collision name="n_col"><pose>5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></collision>
-        <visual name="n_vis"><pose>5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></visual>
-        <collision name="s_col"><pose>-5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></collision>
-        <visual name="s_vis"><pose>-5 0 0.5 0 0 0</pose><geometry><box><size>0.1 10 1</size></box></geometry></visual>
-        <collision name="e_col"><pose>0 5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></collision>
-        <visual name="e_vis"><pose>0 5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></visual>
-        <collision name="w_col"><pose>0 -5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></collision>
-        <visual name="w_vis"><pose>0 -5 0.5 0 0 0</pose><geometry><box><size>10 0.1 1</size></box></geometry></visual>
+        <collision name="n_col"><pose>6 0 0.5 0 0 0</pose><geometry><box><size>0.1 12 1</size></box></geometry></collision>
+        <visual name="n_vis"><pose>6 0 0.5 0 0 0</pose><geometry><box><size>0.1 12 1</size></box></geometry></visual>
+
+        <collision name="s_col"><pose>-6 0 0.5 0 0 0</pose><geometry><box><size>0.1 12 1</size></box></geometry></collision>
+        <visual name="s_vis"><pose>-6 0 0.5 0 0 0</pose><geometry><box><size>0.1 12 1</size></box></geometry></visual>
+
+        <collision name="e_col"><pose>0 6 0.5 0 0 0</pose><geometry><box><size>12 0.1 1</size></box></geometry></collision>
+        <visual name="e_vis"><pose>0 6 0.5 0 0 0</pose><geometry><box><size>12 0.1 1</size></box></geometry></visual>
+
+        <collision name="w_col"><pose>0 -6 0.5 0 0 0</pose><geometry><box><size>12 0.1 1</size></box></geometry></collision>
+        <visual name="w_vis"><pose>0 -6 0.5 0 0 0</pose><geometry><box><size>12 0.1 1</size></box></geometry></visual>
       </link>
     </model>
 
-    <model name="industrial_box_1">
+    <!-- Industrial Equipment & Storage Racks -->
+    <model name="storage_rack_east">
       <static>true</static>
-      <pose>2.0 1.5 0.5 0 0 0</pose>
+      <pose>3.2 2.0 0.5 0 0 0</pose>
       <link name="link">
-        <collision name="collision"><geometry><box><size>1.0 1.0 1.0</size></box></geometry></collision>
+        <collision name="collision"><geometry><box><size>1.0 1.2 1.0</size></box></geometry></collision>
         <visual name="visual">
-          <geometry><box><size>1.0 1.0 1.0</size></box></geometry>
-          <material><ambient>0.1 0.5 0.1 1</ambient><diffuse>0.1 0.7 0.1 1</diffuse></material>
+          <geometry><box><size>1.0 1.2 1.0</size></box></geometry>
+          <material><ambient>0.1 0.4 0.6 1</ambient><diffuse>0.1 0.5 0.8 1</diffuse></material>
         </visual>
       </link>
     </model>
 
-    <model name="industrial_box_2">
+    <model name="storage_rack_west">
       <static>true</static>
-      <pose>1.5 -2.0 0.5 0 0 0</pose>
+      <pose>-3.2 2.0 0.5 0 0 0</pose>
       <link name="link">
-        <collision name="collision"><geometry><box><size>0.8 0.8 1.0</size></box></geometry></collision>
+        <collision name="collision"><geometry><box><size>1.0 1.2 1.0</size></box></geometry></collision>
         <visual name="visual">
-          <geometry><box><size>0.8 0.8 1.0</size></box></geometry>
-          <material><ambient>0.1 0.5 0.1 1</ambient><diffuse>0.1 0.7 0.1 1</diffuse></material>
+          <geometry><box><size>1.0 1.2 1.0</size></box></geometry>
+          <material><ambient>0.1 0.4 0.6 1</ambient><diffuse>0.1 0.5 0.8 1</diffuse></material>
         </visual>
       </link>
     </model>
 
-    <model name="industrial_box_3">
+    <model name="heavy_machinery_south">
       <static>true</static>
-      <pose>-2.5 2.0 0.5 0 0 0</pose>
+      <pose>0.0 -3.5 0.5 0 0 0</pose>
       <link name="link">
-        <collision name="collision"><geometry><box><size>1.2 0.6 1.0</size></box></geometry></collision>
+        <collision name="collision"><geometry><box><size>1.6 1.0 1.0</size></box></geometry></collision>
         <visual name="visual">
-          <geometry><box><size>1.2 0.6 1.0</size></box></geometry>
-          <material><ambient>0.1 0.5 0.1 1</ambient><diffuse>0.1 0.7 0.1 1</diffuse></material>
+          <geometry><box><size>1.6 1.0 1.0</size></box></geometry>
+          <material><ambient>0.2 0.5 0.2 1</ambient><diffuse>0.2 0.7 0.2 1</diffuse></material>
         </visual>
       </link>
     </model>
 
-    <!-- Visual Industrial Safety Hazards -->
+    <!-- Distributed Industrial Safety Hazards -->
     <model name="fire_hazard_barrel">
       <static>true</static>
-      <pose>2.5 0.0 0.4 0 0 0</pose>
+      <pose>2.5 -1.2 0.4 0 0 0</pose>
       <link name="link">
         <collision name="collision"><geometry><cylinder><radius>0.3</radius><length>0.8</length></cylinder></geometry></collision>
         <visual name="visual">
@@ -120,7 +125,7 @@
 
     <model name="chemical_leak_spill">
       <static>true</static>
-      <pose>0.0 2.5 0.02 0 0 0</pose>
+      <pose>0.0 3.5 0.02 0 0 0</pose>
       <link name="link">
         <collision name="collision"><geometry><cylinder><radius>0.7</radius><length>0.04</length></cylinder></geometry></collision>
         <visual name="visual">
@@ -130,9 +135,9 @@
       </link>
     </model>
 
-    <model name="blocked_pathway_hazard">
+    <model name="pathway_blockage_box">
       <static>true</static>
-      <pose>-1.5 -2.0 0.4 0 0 0</pose>
+      <pose>-2.8 -1.5 0.4 0 0 0</pose>
       <link name="link">
         <collision name="collision"><geometry><box><size>0.6 0.6 0.8</size></box></geometry></collision>
         <visual name="visual">

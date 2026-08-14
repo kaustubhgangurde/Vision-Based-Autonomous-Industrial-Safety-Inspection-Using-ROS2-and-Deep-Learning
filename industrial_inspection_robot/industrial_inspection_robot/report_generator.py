@@ -180,17 +180,37 @@ class ReportGeneratorNode(Node):
             with open(os.path.join(target_dir, 'inspection_summary.json'), 'w') as f:
                 json.dump({"hazards": self.hazards_db, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}, f, indent=4)
 
+        report_file_path = os.path.join(user_report_dir, 'latest_report.html')
+        report_url = f'file://{report_file_path}'
+        
+        self.get_logger().info(f"============================================================")
+        self.get_logger().info(f"INSPECTION COMPLETE! Safety Report compiled successfully.")
+        self.get_logger().info(f"Report Location: {report_url}")
+        self.get_logger().info(f"============================================================")
+
+        try:
+            webbrowser.open(report_url)
+            subprocess.Popen(['xdg-open', report_file_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception:
+            pass
+
 def main(args=None):
     rclpy.init(args=args)
     node = ReportGeneratorNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, rclpy.executors.ExternalShutdownException, Exception):
         pass
     finally:
-        node.destroy_node()
+        try:
+            node.destroy_node()
+        except Exception:
+            pass
         if rclpy.ok():
-            rclpy.shutdown()
+            try:
+                rclpy.shutdown()
+            except Exception:
+                pass
 
 if __name__ == '__main__':
     main()

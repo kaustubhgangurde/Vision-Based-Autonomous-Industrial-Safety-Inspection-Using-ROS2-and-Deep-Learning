@@ -5,16 +5,20 @@ import json
 import os
 import time
 import math
+import subprocess
 from std_msgs.msg import String
 
 class ReportGeneratorNode(Node):
     def __init__(self):
         super().__init__('report_generator_node')
         
+        self.output_dir = '/home/kaustubh/inspection_robot_ws/reports'
+        os.makedirs(self.output_dir, exist_ok=True)
+        
         self.hazards_db = []
         self.start_time = time.strftime("%Y-%m-%d %H:%M:%S")
-        self.mission_complete_logged = False
         
+        self.mission_complete_logged = False
         self.create_subscription(String, '/inspection/detected_hazards', self.hazard_callback, 10)
         self.create_subscription(String, '/inspection/status', self.status_callback, 10)
         
@@ -47,8 +51,13 @@ class ReportGeneratorNode(Node):
         if "MISSION_COMPLETE" in msg.data:
             if not self.mission_complete_logged:
                 self.mission_complete_logged = True
-                self.get_logger().info("Mission completion received. Compiling final safety inspection report...")
+                self.get_logger().info("Mission completion received. Compiling final safety inspection report and launching browser...")
                 self.generate_reports()
+                report_path = os.path.expanduser('~/inspection_reports/latest_report.html')
+                try:
+                    subprocess.Popen(['xdg-open', report_path])
+                except Exception as e:
+                    self.get_logger().error(f"Could not automatically open browser: {e}")
 
     def generate_reports(self):
         if not self.hazards_db:

@@ -180,6 +180,7 @@ class ReportGeneratorNode(Node):
             with open(os.path.join(target_dir, 'inspection_summary.json'), 'w') as f:
                 json.dump({"hazards": self.hazards_db, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}, f, indent=4)
 
+        user_report_dir = directories[0]
         report_file_path = os.path.join(user_report_dir, 'latest_report.html')
         report_url = f'file://{report_file_path}'
         

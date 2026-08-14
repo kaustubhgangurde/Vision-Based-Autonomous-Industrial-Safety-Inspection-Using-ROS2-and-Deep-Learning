@@ -147,5 +147,33 @@
       </link>
     </model>
 
+    <!-- Autonomous AMR Charging Dock Station Base -->
+    <model name="charging_dock_station">
+      <static>true</static>
+      <pose>-0.4 0.0 0.0 0 0 0</pose>
+      <link name="link">
+        <!-- Floor Charging Plate -->
+        <collision name="plate_col"><pose>0.4 0 0.01 0 0 0</pose><geometry><box><size>0.8 0.8 0.02</size></box></geometry></collision>
+        <visual name="plate_vis">
+          <pose>0.4 0 0.01 0 0 0</pose>
+          <geometry><box><size>0.8 0.8 0.02</size></box></geometry>
+          <material><ambient>0.2 0.2 0.25 1</ambient><diffuse>0.3 0.3 0.35 1</diffuse></material>
+        </visual>
+        <!-- Charging Tower -->
+        <collision name="tower_col"><pose>0 0 0.4 0 0 0</pose><geometry><box><size>0.2 0.6 0.8</size></box></geometry></collision>
+        <visual name="tower_vis">
+          <pose>0 0 0.4 0 0 0</pose>
+          <geometry><box><size>0.2 0.6 0.8</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
+        </visual>
+        <!-- Status Indicator Beacon (Green LED) -->
+        <visual name="beacon_vis">
+          <pose>0 0 0.85 0 0 0</pose>
+          <geometry><cylinder><radius>0.08</radius><length>0.1</length></cylinder></geometry>
+          <material><ambient>0.0 0.9 0.2 1</ambient><diffuse>0.0 1.0 0.3 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
   </world>
 </sdf>

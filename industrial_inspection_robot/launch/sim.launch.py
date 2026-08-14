@@ -6,6 +6,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
+import xacro
+
 def generate_launch_description():
     package_name = 'industrial_inspection_robot'
 
@@ -15,6 +17,10 @@ def generate_launch_description():
     # Path to the world file
     pkg_share = get_package_share_directory(package_name)
     world_file = os.path.join(pkg_share, 'config', 'burger_world.sdf')
+
+    # Process URDF using xacro directly for fast spawning
+    xacro_file = os.path.join(pkg_share, 'description', 'robot.urdf.xacro')
+    robot_description_xml = xacro.process_file(xacro_file).toxml()
 
     # Include Gazebo Simulation Launch
     gazebo = IncludeLaunchDescription(
@@ -37,8 +43,10 @@ def generate_launch_description():
         package='ros_gz_sim',
         executable='create',
         arguments=[
-            '-topic', 'robot_description',
+            '-string', robot_description_xml,
             '-name', 'industrial_inspection_robot',
+            '-x', '0.0',
+            '-y', '0.0',
             '-z', '0.1'
         ],
         output='screen'
@@ -52,6 +60,8 @@ def generate_launch_description():
             '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
             '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+            '/camera/image_raw@sensor_msgs/msg/Image[gz.msgs.Image',
+            '/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
             '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'
         ],

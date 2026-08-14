@@ -25,8 +25,13 @@ install(
 
 # Install Python scripts
 install(
-  PROGRAMS industrial_inspection_robot/data_acq.py
+  PROGRAMS
+    industrial_inspection_robot/data_acq.py
+    industrial_inspection_robot/hazard_detector.py
+    industrial_inspection_robot/inspection_manager.py
+    industrial_inspection_robot/report_generator.py
   DESTINATION lib/${PROJECT_NAME}
+  PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 )
 
 if(BUILD_TESTING)

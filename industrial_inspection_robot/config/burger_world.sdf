@@ -102,5 +102,42 @@
       </link>
     </model>
 
+    <!-- Visual Industrial Safety Hazards -->
+    <model name="fire_hazard_barrel">
+      <static>true</static>
+      <pose>2.5 0.0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.3</radius><length>0.8</length></cylinder></geometry></collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.3</radius><length>0.8</length></cylinder></geometry>
+          <material><ambient>0.9 0.1 0.1 1</ambient><diffuse>1.0 0.0 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="chemical_leak_spill">
+      <static>true</static>
+      <pose>0.0 2.5 0.02 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.7</radius><length>0.04</length></cylinder></geometry></collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.7</radius><length>0.04</length></cylinder></geometry>
+          <material><ambient>0.9 0.8 0.0 1</ambient><diffuse>1.0 0.9 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="blocked_pathway_hazard">
+      <static>true</static>
+      <pose>-1.5 -2.0 0.4 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.6 0.6 0.8</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>0.6 0.6 0.8</size></box></geometry>
+          <material><ambient>0.9 0.4 0.0 1</ambient><diffuse>1.0 0.5 0.0 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
   </world>
 </sdf>
